@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/coremarket_db
+    username: postgres
+    password: your_password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+    show-sql: true
