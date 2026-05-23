@@ -23,4 +23,6 @@ public class EmpresaService {
     public List<Empresa> listarTodas() {
         return empresaRepository.findAll();
     }
+
+    
 }

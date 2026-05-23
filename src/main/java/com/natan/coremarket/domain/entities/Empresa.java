@@ -42,7 +42,7 @@ public class Empresa {
     @Column(unique = true, nullable = false)
     private String cnpj;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
