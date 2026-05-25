@@ -2,6 +2,8 @@ package com.natan.coremarket.domain.entities;
 
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -44,7 +46,8 @@ public class ItemCompra {
     @Column(precision = 10, scale = 2)
     private BigDecimal subTotal;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "compra_id", nullable = false)
     private Compra compra;
     
