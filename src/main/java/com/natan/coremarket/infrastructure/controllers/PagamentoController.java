@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.natan.coremarket.application.dtos.pagamento.PagamentoRequestDTO;
+import com.natan.coremarket.application.dtos.pagamento.PagamentoResponseDTO;
 import com.natan.coremarket.application.services.PagamentoService;
-import com.natan.coremarket.domain.entities.Pagamento;
-
 @RestController
 @RequestMapping("/pagamentos")
 public class PagamentoController {
@@ -26,26 +26,26 @@ public class PagamentoController {
     }
 
     @PostMapping
-    public Pagamento salvar(@RequestBody Pagamento pagamento) {
-        return pagamentoService.salvar(pagamento);
+    public PagamentoResponseDTO salvar(@RequestBody PagamentoRequestDTO pagamentoRequestDTO) {
+        return pagamentoService.salvar(pagamentoRequestDTO);
     }
 
     @GetMapping
-    public List<Pagamento> listarTodos() {
+    public List<PagamentoResponseDTO> listarTodos() {
         return pagamentoService.listarTodos();
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<Pagamento> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<PagamentoResponseDTO> buscarPorId(@PathVariable Long id) {
         return pagamentoService.buscarPorId(id)
             .map(pagamento -> ResponseEntity.ok().body(pagamento))
             .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Pagamento> atualizar(@PathVariable Long id, @RequestBody Pagamento pagamento) {
-        return pagamentoService.atualizar(id, pagamento)
-            .map(pagamentoAtualizado -> ResponseEntity.ok().body(pagamentoAtualizado))
+    public ResponseEntity<PagamentoResponseDTO> atualizar(@PathVariable Long id, @RequestBody PagamentoRequestDTO pagamentoRequestDTO) {
+        return pagamentoService.atualizar(id, pagamentoRequestDTO)
+            .map(pagamento -> ResponseEntity.ok().body(pagamento))
             .orElse(ResponseEntity.notFound().build());
     }
 
@@ -56,6 +56,3 @@ public class PagamentoController {
         return ResponseEntity.noContent().build();
     }
 }
-
-    
-

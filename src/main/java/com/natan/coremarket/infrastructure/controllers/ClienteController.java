@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.natan.coremarket.application.dtos.cliente.ClienteRequestDTO;
+import com.natan.coremarket.application.dtos.cliente.ClienteResponseDTO;
 import com.natan.coremarket.application.services.ClienteService;
-import com.natan.coremarket.domain.entities.Cliente;
-
 @RestController
 @RequestMapping("/clientes")
 public class ClienteController {
@@ -27,25 +27,25 @@ public class ClienteController {
     }
 
     @PostMapping
-    public Cliente salvar(@RequestBody Cliente cliente) {
-        return clienteService.salvar(cliente);
+    public ClienteResponseDTO salvar(@RequestBody ClienteRequestDTO clienteRequestDTO) {
+        return clienteService.salvar(clienteRequestDTO);
     }
 
     @GetMapping
-    public List<Cliente> listarTodas() {
+    public List<ClienteResponseDTO> listarTodas() {
         return clienteService.listarTodos();
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<Cliente> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<ClienteResponseDTO> buscarPorId(@PathVariable Long id) {
         return clienteService.buscarPorId(id)
             .map(cliente -> ResponseEntity.ok().body(cliente))
             .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Cliente> atualizar(@PathVariable Long id, @RequestBody Cliente cliente) {
-        return clienteService.atualizar(id, cliente)
+    public ResponseEntity<ClienteResponseDTO> atualizar(@PathVariable Long id, @RequestBody ClienteRequestDTO clienteRequestDTO) {
+        return clienteService.atualizar(id, clienteRequestDTO)
             .map(clienteAtualizado -> ResponseEntity.ok().body(clienteAtualizado))
             .orElse(ResponseEntity.notFound().build());
     }
