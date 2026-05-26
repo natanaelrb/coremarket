@@ -59,7 +59,9 @@ public class Compra {
     @Enumerated(EnumType.STRING)
     private StatusCompra status;
 
-    @OneToMany(mappedBy = "compra", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "compra",
+           cascade = CascadeType.ALL,
+           orphanRemoval = true)
     private List<ItemCompra> itens = new ArrayList<>();
 
     @PrePersist

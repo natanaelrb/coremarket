@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.natan.coremarket.application.dtos.compra.CompraRequestDTO;
+import com.natan.coremarket.application.dtos.compra.CompraResponseDTO;
 import com.natan.coremarket.application.services.CompraService;
-import com.natan.coremarket.domain.entities.Compra;
-
 @RestController
 @RequestMapping("/compras")
 public class CompraController {
@@ -26,25 +26,25 @@ public class CompraController {
     }
 
     @PostMapping
-    public Compra salvar(@RequestBody Compra compra) {
-        return compraService.salvar(compra);
+    public CompraResponseDTO salvar(@RequestBody CompraRequestDTO compraRequestDTO) {
+        return compraService.salvar(compraRequestDTO);
     }
 
     @GetMapping
-    public List<Compra> listarTodos() {
+    public List<CompraResponseDTO> listarTodos() {
         return compraService.listarTodos();
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<Compra> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<CompraResponseDTO> buscarPorId(@PathVariable Long id) {
         return compraService.buscarPorId(id)
             .map(compra -> ResponseEntity.ok().body(compra))
             .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Compra> atualizar(@PathVariable Long id, @RequestBody Compra compra) {
-        return compraService.atualizar(id, compra)
+    public ResponseEntity<CompraResponseDTO> atualizar(@PathVariable Long id, @RequestBody CompraRequestDTO compraRequestDTO) {
+        return compraService.atualizar(id, compraRequestDTO)
             .map(compraAtualizada -> ResponseEntity.ok().body(compraAtualizada))
             .orElse(ResponseEntity.notFound().build());
     }
