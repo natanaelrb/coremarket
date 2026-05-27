@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.natan.coremarket.application.dtos.compra.CompraRequestDTO;
 import com.natan.coremarket.application.dtos.compra.CompraResponseDTO;
 import com.natan.coremarket.application.services.CompraService;
+
+import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/compras")
 public class CompraController {
@@ -26,7 +28,7 @@ public class CompraController {
     }
 
     @PostMapping
-    public CompraResponseDTO salvar(@RequestBody CompraRequestDTO compraRequestDTO) {
+    public CompraResponseDTO salvar(@RequestBody @Valid CompraRequestDTO compraRequestDTO) {
         return compraService.salvar(compraRequestDTO);
     }
 
@@ -43,7 +45,7 @@ public class CompraController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CompraResponseDTO> atualizar(@PathVariable Long id, @RequestBody CompraRequestDTO compraRequestDTO) {
+    public ResponseEntity<CompraResponseDTO> atualizar(@PathVariable Long id, @Valid @RequestBody CompraRequestDTO compraRequestDTO) {
         return compraService.atualizar(id, compraRequestDTO)
             .map(compraAtualizada -> ResponseEntity.ok().body(compraAtualizada))
             .orElse(ResponseEntity.notFound().build());

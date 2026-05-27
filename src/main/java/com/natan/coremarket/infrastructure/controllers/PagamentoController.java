@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.natan.coremarket.application.dtos.pagamento.PagamentoRequestDTO;
 import com.natan.coremarket.application.dtos.pagamento.PagamentoResponseDTO;
 import com.natan.coremarket.application.services.PagamentoService;
+
+import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/pagamentos")
 public class PagamentoController {
@@ -26,7 +28,7 @@ public class PagamentoController {
     }
 
     @PostMapping
-    public PagamentoResponseDTO salvar(@RequestBody PagamentoRequestDTO pagamentoRequestDTO) {
+    public PagamentoResponseDTO salvar(@RequestBody @Valid PagamentoRequestDTO pagamentoRequestDTO) {
         return pagamentoService.salvar(pagamentoRequestDTO);
     }
 
@@ -43,7 +45,7 @@ public class PagamentoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PagamentoResponseDTO> atualizar(@PathVariable Long id, @RequestBody PagamentoRequestDTO pagamentoRequestDTO) {
+    public ResponseEntity<PagamentoResponseDTO> atualizar(@PathVariable Long id, @Valid @RequestBody PagamentoRequestDTO pagamentoRequestDTO) {
         return pagamentoService.atualizar(id, pagamentoRequestDTO)
             .map(pagamento -> ResponseEntity.ok().body(pagamento))
             .orElse(ResponseEntity.notFound().build());

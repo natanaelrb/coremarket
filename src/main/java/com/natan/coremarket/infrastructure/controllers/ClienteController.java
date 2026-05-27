@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.natan.coremarket.application.dtos.cliente.ClienteRequestDTO;
 import com.natan.coremarket.application.dtos.cliente.ClienteResponseDTO;
 import com.natan.coremarket.application.services.ClienteService;
+
+import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/clientes")
 public class ClienteController {
@@ -27,7 +29,7 @@ public class ClienteController {
     }
 
     @PostMapping
-    public ClienteResponseDTO salvar(@RequestBody ClienteRequestDTO clienteRequestDTO) {
+    public ClienteResponseDTO salvar(@RequestBody @Valid ClienteRequestDTO clienteRequestDTO) {
         return clienteService.salvar(clienteRequestDTO);
     }
 
@@ -44,7 +46,7 @@ public class ClienteController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ClienteResponseDTO> atualizar(@PathVariable Long id, @RequestBody ClienteRequestDTO clienteRequestDTO) {
+    public ResponseEntity<ClienteResponseDTO> atualizar(@PathVariable Long id, @Valid @RequestBody ClienteRequestDTO clienteRequestDTO) {
         return clienteService.atualizar(id, clienteRequestDTO)
             .map(clienteAtualizado -> ResponseEntity.ok().body(clienteAtualizado))
             .orElse(ResponseEntity.notFound().build());
