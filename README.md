@@ -133,4 +133,4 @@ A primeira versão do sistema terá foco em:
 
 # 👨‍💻 Autor
 
-Desenvolvido por Natanael Rodrigues.
+Desenvolvido por Natanael Ribeiro.
