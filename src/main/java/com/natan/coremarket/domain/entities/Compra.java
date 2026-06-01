@@ -59,6 +59,9 @@ public class Compra {
     @Enumerated(EnumType.STRING)
     private StatusCompra status;
 
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal valorPago = BigDecimal.ZERO;
+
     @OneToMany(mappedBy = "compra",
            cascade = CascadeType.ALL,
            orphanRemoval = true)
@@ -67,6 +70,10 @@ public class Compra {
     @PrePersist
     public void prePersist() {
         dataCompra = LocalDateTime.now();
+    }
+
+    public BigDecimal getSaldoDevedor() {
+        return valorTotal.subtract(valorPago);
     }
 
 }

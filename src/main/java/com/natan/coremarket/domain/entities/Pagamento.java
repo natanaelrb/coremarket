@@ -50,6 +50,10 @@ public class Pagamento {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "empresa_id", nullable = false)
     private Empresa empresa;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "compra_id", nullable = false)
+    private Compra compra;
     
     @PrePersist
     public void prePersist() {
