@@ -1,10 +1,12 @@
 package com.natan.coremarket.domain.entities;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.natan.coremarket.domain.enums.FormaPagamento;
 import com.natan.coremarket.domain.enums.StatusCompra;
 
 import jakarta.persistence.CascadeType;
@@ -61,6 +63,12 @@ public class Compra {
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valorPago = BigDecimal.ZERO;
+
+    @Enumerated(EnumType.STRING)
+    private FormaPagamento formaPagamento;
+
+    @Column(name = "data_vencimento")
+    private LocalDate dataVencimento;
 
     @OneToMany(mappedBy = "compra",
            cascade = CascadeType.ALL,
