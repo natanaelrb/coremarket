@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.natan.coremarket.domain.enums.FormaPagamento;
 import com.natan.coremarket.domain.enums.StatusCompra;
+import com.natan.coremarket.domain.enums.StatusPagamento;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -65,7 +66,12 @@ public class Compra {
     private BigDecimal valorPago = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "forma_pagamento", nullable = false)    
     private FormaPagamento formaPagamento;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_pagamento")
+    private StatusPagamento statusPagamento;
 
     @Column(name = "data_vencimento")
     private LocalDate dataVencimento;
