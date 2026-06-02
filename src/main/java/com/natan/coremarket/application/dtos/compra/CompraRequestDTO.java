@@ -1,9 +1,11 @@
 package com.natan.coremarket.application.dtos.compra;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import com.natan.coremarket.application.dtos.itemCompra.ItemCompraRequestDTO;
+import com.natan.coremarket.domain.enums.FormaPagamento;
 import com.natan.coremarket.domain.enums.StatusCompra;
 
 import jakarta.validation.Valid;
@@ -31,4 +33,9 @@ public class CompraRequestDTO {
     @Valid
     @NotEmpty(message = "A compra deve ter pelo menos um item")
     private List<ItemCompraRequestDTO> itens;
+
+    @NotNull(message = "A forma de pagamento é obrigatória")
+    private FormaPagamento formaPagamento;
+
+    private LocalDate dataVencimento;
 }

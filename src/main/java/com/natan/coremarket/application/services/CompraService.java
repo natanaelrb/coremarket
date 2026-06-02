@@ -14,6 +14,8 @@ import com.natan.coremarket.domain.entities.Cliente;
 import com.natan.coremarket.domain.entities.Compra;
 import com.natan.coremarket.domain.entities.Empresa;
 import com.natan.coremarket.domain.entities.ItemCompra;
+import com.natan.coremarket.domain.enums.FormaPagamento;
+import com.natan.coremarket.domain.enums.StatusPagamento;
 import com.natan.coremarket.infrastructure.repositories.ClienteRepository;
 import com.natan.coremarket.infrastructure.repositories.CompraRepository;
 import com.natan.coremarket.infrastructure.repositories.EmpresaRepository;
@@ -40,10 +42,31 @@ public class CompraService {
 
         Compra compra = new Compra();
 
+        if (compraRequestDTO.getFormaPagamento() == FormaPagamento.PRAZO
+                && compraRequestDTO.getDataVencimento() == null) {
+
+            throw new IllegalArgumentException(
+                    "Data de vencimento é obrigatória para compras a prazo");
+        }
+
         compra.setCliente(cliente);
         compra.setEmpresa(empresa);
         compra.setValorTotal(compraRequestDTO.getValorTotal());
         compra.setStatus(compraRequestDTO.getStatus());
+        compra.setFormaPagamento(compraRequestDTO.getFormaPagamento());
+        compra.setDataVencimento(compraRequestDTO.getDataVencimento());
+
+        if (compraRequestDTO.getFormaPagamento() == FormaPagamento.PRAZO) {
+
+            compra.setValorPago(BigDecimal.ZERO);
+            compra.setStatusPagamento(StatusPagamento.PENDENTE);
+
+        } else {
+
+            compra.setValorPago(compraRequestDTO.getValorTotal());
+            compra.setStatusPagamento(StatusPagamento.PAGO);
+
+        }
 
         List<ItemCompra> novosItens = compraRequestDTO.getItens().stream()
             .map(itemDTO -> {
@@ -82,7 +105,12 @@ public class CompraService {
                     item.getPrecoUnitario(),
                     item.getSubTotal()
                 ))
-                .collect(Collectors.toList())
+                .collect(Collectors.toList()),
+            compraSalva.getValorPago(),
+            compraSalva.getSaldoDevedor(),
+            compraSalva.getFormaPagamento(),
+            compraSalva.getStatusPagamento(),
+            compraSalva.getDataVencimento()
         );
     }
     
@@ -101,7 +129,12 @@ public class CompraService {
                         item.getPrecoUnitario(),
                         item.getSubTotal()
                     ))
-                    .collect(Collectors.toList())
+                    .collect(Collectors.toList()),
+                compra.getValorPago(),
+                compra.getSaldoDevedor(),
+                compra.getFormaPagamento(),
+                compra.getStatusPagamento(),
+                compra.getDataVencimento()
             ))
             .collect(Collectors.toList());
     }
@@ -120,7 +153,12 @@ public class CompraService {
                         item.getPrecoUnitario(),
                         item.getSubTotal()
                     ))
-                    .collect(Collectors.toList())
+                    .collect(Collectors.toList()),
+                compra.getValorPago(),
+                compra.getSaldoDevedor(),
+                compra.getFormaPagamento(),
+                compra.getStatusPagamento(),
+                compra.getDataVencimento()
             ));
     }
 
@@ -181,7 +219,12 @@ public class CompraService {
                             item.getPrecoUnitario(),
                             item.getSubTotal()
                         ))
-                        .collect(Collectors.toList())
+                        .collect(Collectors.toList()),
+                    compraAtualizada.getValorPago(),
+                    compraAtualizada.getSaldoDevedor(),
+                    compraAtualizada.getFormaPagamento(),
+                    compraAtualizada.getStatusPagamento(),
+                    compraAtualizada.getDataVencimento()
                 );
             });
     }
