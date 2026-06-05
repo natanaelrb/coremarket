@@ -10,7 +10,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PagamentoRequestDTO {
-    
+
+    @NotNull(message = "O ID da compra é obrigatório")
+    private Long compraId;
+
     @NotNull(message = "O valor pago é obrigatório")
     private BigDecimal valorPago;
 

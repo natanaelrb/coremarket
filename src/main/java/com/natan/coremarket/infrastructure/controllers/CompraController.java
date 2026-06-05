@@ -44,6 +44,11 @@ public class CompraController {
             .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/pendentes")
+    public List<CompraResponseDTO> listarPendentes() {
+        return compraService.listarPendentes();
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<CompraResponseDTO> atualizar(@PathVariable Long id, @Valid @RequestBody CompraRequestDTO compraRequestDTO) {
         return compraService.atualizar(id, compraRequestDTO)

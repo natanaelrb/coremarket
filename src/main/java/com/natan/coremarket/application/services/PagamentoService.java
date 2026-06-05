@@ -1,9 +1,13 @@
 package com.natan.coremarket.application.services;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.natan.coremarket.domain.entities.Compra;
+import com.natan.coremarket.domain.enums.StatusPagamento;
+import com.natan.coremarket.infrastructure.repositories.CompraRepository;
 import org.springframework.stereotype.Service;
 
 import com.natan.coremarket.application.dtos.pagamento.PagamentoRequestDTO;
@@ -20,12 +24,14 @@ public class PagamentoService {
     private final PagamentoRepository pagamentoRepository;
     private final ClienteRepository clienteRepository;
     private final EmpresaRepository empresaRepository;
+    private final CompraRepository compraRepository;
     
 
-    public PagamentoService(PagamentoRepository pagamentoRepository, ClienteRepository clienteRepository, EmpresaRepository empresaRepository) {
+    public PagamentoService(PagamentoRepository pagamentoRepository, ClienteRepository clienteRepository, EmpresaRepository empresaRepository, CompraRepository compraRepository) {
         this.pagamentoRepository = pagamentoRepository;
         this.clienteRepository = clienteRepository;
         this.empresaRepository = empresaRepository;
+        this.compraRepository = compraRepository;
     }
     
     public PagamentoResponseDTO salvar(PagamentoRequestDTO pagamentoRequestDTO) {
@@ -36,14 +42,51 @@ public class PagamentoService {
         Empresa empresa = empresaRepository.findById(pagamentoRequestDTO.getEmpresaId())
             .orElseThrow(() -> new IllegalArgumentException("Empresa não encontrada"));
 
+        Compra compra = compraRepository.findById(
+                pagamentoRequestDTO.getCompraId()
+        ).orElseThrow(() ->
+                new IllegalArgumentException("Compra não encontrada")
+        );
+
         Pagamento pagamento = new Pagamento();
 
         pagamento.setValorPago(pagamentoRequestDTO.getValorPago());
         pagamento.setObservacao(pagamentoRequestDTO.getObservacao());
         pagamento.setCliente(cliente);
         pagamento.setEmpresa(empresa);
+        pagamento.setCompra(compra);
 
         Pagamento pagamentoSalvo = pagamentoRepository.save(pagamento);
+
+        BigDecimal novoValorPago =
+                compra.getValorPago().add(
+                        pagamentoRequestDTO.getValorPago()
+                );
+
+        if (novoValorPago.compareTo(compra.getValorTotal()) > 0) {
+
+            throw new IllegalArgumentException(
+                    "Pagamento maior que o saldo devedor."
+            );
+
+        }
+        compra.setValorPago(
+                compra.getValorPago().add(
+                        pagamentoRequestDTO.getValorPago()
+                )
+        );
+
+        if (compra.getSaldoDevedor().compareTo(BigDecimal.ZERO) <= 0) {
+
+            compra.setStatusPagamento(StatusPagamento.PAGO);
+
+        } else {
+
+            compra.setStatusPagamento(StatusPagamento.PARCIAL);
+
+        }
+
+        compraRepository.save(compra);
         
         return new PagamentoResponseDTO(
             pagamentoSalvo.getId(),

@@ -17,6 +17,7 @@ import lombok.Getter;
 public class CompraResponseDTO {
 
     private Long id;
+    private String nomeCliente;
     private BigDecimal valorTotal;
     private StatusCompra status;
     private List<ItemCompraResponseDTO> itens;

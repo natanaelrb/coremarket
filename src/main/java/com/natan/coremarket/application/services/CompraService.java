@@ -95,6 +95,7 @@ public class CompraService {
 
         return new CompraResponseDTO(
             compraSalva.getId(),
+            compraSalva.getCliente().getNome(),
             compraSalva.getValorTotal(),
             compraSalva.getStatus(),
             compraSalva.getItens().stream()
@@ -119,6 +120,7 @@ public class CompraService {
         return compraRepository.findAll().stream()
             .map(compra -> new CompraResponseDTO(
                 compra.getId(),
+                compra.getCliente().getNome(),
                 compra.getValorTotal(),
                 compra.getStatus(),
                 compra.getItens().stream()
@@ -139,10 +141,44 @@ public class CompraService {
             .collect(Collectors.toList());
     }
 
+    private CompraResponseDTO converterParaDTO(Compra compra) {
+
+        return new CompraResponseDTO(
+            compra.getId(),
+            compra.getCliente().getNome(),
+            compra.getValorTotal(),
+            compra.getStatus(),
+            compra.getItens().stream()
+                .map(item -> new ItemCompraResponseDTO(
+                    item.getId(),
+                    item.getNomeProduto(),
+                    item.getQuantidade(),
+                    item.getPrecoUnitario(),
+                    item.getSubTotal()
+                ))
+                .collect(Collectors.toList()),
+            compra.getValorPago(),
+            compra.getSaldoDevedor(),
+            compra.getFormaPagamento(),
+            compra.getStatusPagamento(),
+            compra.getDataVencimento()
+        );
+
+    }
+
+    public List<CompraResponseDTO> listarPendentes() {
+        return compraRepository.buscarComprasPendentes()
+            .stream()
+            .map(this::converterParaDTO)
+            .toList();
+
+    }
+
     public Optional<CompraResponseDTO> buscarPorId(Long id) {
         return compraRepository.findById(id)
             .map(compra -> new CompraResponseDTO(
                 compra.getId(),
+                compra.getCliente().getNome(),
                 compra.getValorTotal(),
                 compra.getStatus(),
                 compra.getItens().stream()
@@ -209,6 +245,7 @@ public class CompraService {
 
                 return new CompraResponseDTO(
                     compraAtualizada.getId(),
+                        compraAtualizada.getCliente().getNome(),
                     compraAtualizada.getValorTotal(),
                     compraAtualizada.getStatus(),
                     compraAtualizada.getItens().stream()
