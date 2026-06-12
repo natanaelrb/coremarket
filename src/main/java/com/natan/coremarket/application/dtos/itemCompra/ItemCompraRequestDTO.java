@@ -12,6 +12,9 @@ import lombok.Setter;
 @Setter
 public class ItemCompraRequestDTO {
 
+    @NotNull(message = "O produto é obrigatório")
+    private Long produtoId;
+
     @NotBlank(message = "O nome do produto é obrigatório")
     private String nomeProduto;
 

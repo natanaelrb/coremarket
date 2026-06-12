@@ -50,5 +50,9 @@ public class ItemCompra {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "compra_id", nullable = false)
     private Compra compra;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "produto_id")
+    private Produto produto;
     
 }
