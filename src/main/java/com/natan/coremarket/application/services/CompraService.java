@@ -14,31 +14,37 @@ import com.natan.coremarket.domain.entities.Cliente;
 import com.natan.coremarket.domain.entities.Compra;
 import com.natan.coremarket.domain.entities.Empresa;
 import com.natan.coremarket.domain.entities.ItemCompra;
+import com.natan.coremarket.domain.entities.Produto;
 import com.natan.coremarket.domain.enums.FormaPagamento;
 import com.natan.coremarket.domain.enums.StatusPagamento;
 import com.natan.coremarket.infrastructure.repositories.ClienteRepository;
 import com.natan.coremarket.infrastructure.repositories.CompraRepository;
 import com.natan.coremarket.infrastructure.repositories.EmpresaRepository;
+import com.natan.coremarket.infrastructure.repositories.ProdutoRepository;
+
 @Service
 public class CompraService {
 
     private final CompraRepository compraRepository;
     private final ClienteRepository clienteRepository;
     private final EmpresaRepository empresaRepository;
+    private final ProdutoRepository produtoRepository;
 
-    public CompraService(CompraRepository compraRepository, ClienteRepository clienteRepository, EmpresaRepository empresaRepository) {
+    public CompraService(CompraRepository compraRepository, ClienteRepository clienteRepository,
+            EmpresaRepository empresaRepository, ProdutoRepository produtoRepository) {
         this.compraRepository = compraRepository;
         this.clienteRepository = clienteRepository;
         this.empresaRepository = empresaRepository;
+        this.produtoRepository = produtoRepository;
     }
 
     public CompraResponseDTO salvar(CompraRequestDTO compraRequestDTO) {
 
         Cliente cliente = clienteRepository.findById(compraRequestDTO.getClienteId())
-            .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
+                .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
 
         Empresa empresa = empresaRepository.findById(compraRequestDTO.getEmpresaId())
-            .orElseThrow(() -> new IllegalArgumentException("Empresa não encontrada"));
+                .orElseThrow(() -> new IllegalArgumentException("Empresa não encontrada"));
 
         Compra compra = new Compra();
 
@@ -69,133 +75,145 @@ public class CompraService {
         }
 
         List<ItemCompra> novosItens = compraRequestDTO.getItens().stream()
-            .map(itemDTO -> {
+                .map(itemDTO -> {
 
-                ItemCompra item = new ItemCompra();
+                    Produto produto = produtoRepository
+                            .findById(itemDTO.getProdutoId())
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "Produto não encontrado"));
 
-                item.setNomeProduto(itemDTO.getNomeProduto());
-                item.setQuantidade(itemDTO.getQuantidade());
-                item.setPrecoUnitario(itemDTO.getPrecoUnitario());
+                    if (produto.getQuantidadeEstoque() < itemDTO.getQuantidade()) {
 
-                BigDecimal subTotal = itemDTO.getPrecoUnitario()
-                    .multiply(BigDecimal.valueOf(itemDTO.getQuantidade()));
+                        throw new IllegalArgumentException(
+                                "Estoque insuficiente para "
+                                        + produto.getNome());
 
-                item.setSubTotal(subTotal);
+                    }
 
-                item.setCompra(compra);
+                    produto.setQuantidadeEstoque(
+                            produto.getQuantidadeEstoque()
+                                    - itemDTO.getQuantidade());
 
-                return item;
+                    produtoRepository.save(produto);
 
-            })
-            .collect(Collectors.toList());
+                    ItemCompra item = new ItemCompra();
+
+                    item.setProduto(produto);
+                    item.setNomeProduto(produto.getNome());
+                    item.setQuantidade(itemDTO.getQuantidade());
+                    item.setPrecoUnitario(produto.getPreco());
+
+                    BigDecimal subTotal = produto.getPreco()
+                            .multiply(
+                                    BigDecimal.valueOf(
+                                            itemDTO.getQuantidade()));
+
+                    item.setSubTotal(subTotal);
+                    item.setCompra(compra);
+
+                    return item;
+
+                })
+                .collect(Collectors.toList());
 
         compra.getItens().addAll(novosItens);
 
         Compra compraSalva = compraRepository.save(compra);
 
         return new CompraResponseDTO(
-            compraSalva.getId(),
-            compraSalva.getCliente().getNome(),
-            compraSalva.getValorTotal(),
-            compraSalva.getStatus(),
-            compraSalva.getItens().stream()
-                .map(item -> new ItemCompraResponseDTO(
-                    item.getId(),
-                    item.getNomeProduto(),
-                    item.getQuantidade(),
-                    item.getPrecoUnitario(),
-                    item.getSubTotal()
-                ))
-                .collect(Collectors.toList()),
-            compraSalva.getValorPago(),
-            compraSalva.getSaldoDevedor(),
-            compraSalva.getFormaPagamento(),
-            compraSalva.getStatusPagamento(),
-            compraSalva.getDataVencimento()
-        );
+                compraSalva.getId(),
+                compraSalva.getCliente().getNome(),
+                compraSalva.getValorTotal(),
+                compraSalva.getStatus(),
+                compraSalva.getItens().stream()
+                        .map(item -> new ItemCompraResponseDTO(
+                                item.getId(),
+                                item.getNomeProduto(),
+                                item.getQuantidade(),
+                                item.getPrecoUnitario(),
+                                item.getSubTotal()))
+                        .collect(Collectors.toList()),
+                compraSalva.getValorPago(),
+                compraSalva.getSaldoDevedor(),
+                compraSalva.getFormaPagamento(),
+                compraSalva.getStatusPagamento(),
+                compraSalva.getDataVencimento());
     }
-    
 
     public List<CompraResponseDTO> listarTodos() {
         return compraRepository.findAll().stream()
-            .map(compra -> new CompraResponseDTO(
-                compra.getId(),
-                compra.getCliente().getNome(),
-                compra.getValorTotal(),
-                compra.getStatus(),
-                compra.getItens().stream()
-                    .map(item -> new ItemCompraResponseDTO(
-                        item.getId(),
-                        item.getNomeProduto(),
-                        item.getQuantidade(),
-                        item.getPrecoUnitario(),
-                        item.getSubTotal()
-                    ))
-                    .collect(Collectors.toList()),
-                compra.getValorPago(),
-                compra.getSaldoDevedor(),
-                compra.getFormaPagamento(),
-                compra.getStatusPagamento(),
-                compra.getDataVencimento()
-            ))
-            .collect(Collectors.toList());
+                .map(compra -> new CompraResponseDTO(
+                        compra.getId(),
+                        compra.getCliente().getNome(),
+                        compra.getValorTotal(),
+                        compra.getStatus(),
+                        compra.getItens().stream()
+                                .map(item -> new ItemCompraResponseDTO(
+                                        item.getId(),
+                                        item.getNomeProduto(),
+                                        item.getQuantidade(),
+                                        item.getPrecoUnitario(),
+                                        item.getSubTotal()))
+                                .collect(Collectors.toList()),
+                        compra.getValorPago(),
+                        compra.getSaldoDevedor(),
+                        compra.getFormaPagamento(),
+                        compra.getStatusPagamento(),
+                        compra.getDataVencimento()))
+                .collect(Collectors.toList());
     }
 
     private CompraResponseDTO converterParaDTO(Compra compra) {
 
         return new CompraResponseDTO(
-            compra.getId(),
-            compra.getCliente().getNome(),
-            compra.getValorTotal(),
-            compra.getStatus(),
-            compra.getItens().stream()
-                .map(item -> new ItemCompraResponseDTO(
-                    item.getId(),
-                    item.getNomeProduto(),
-                    item.getQuantidade(),
-                    item.getPrecoUnitario(),
-                    item.getSubTotal()
-                ))
-                .collect(Collectors.toList()),
-            compra.getValorPago(),
-            compra.getSaldoDevedor(),
-            compra.getFormaPagamento(),
-            compra.getStatusPagamento(),
-            compra.getDataVencimento()
-        );
-
-    }
-
-    public List<CompraResponseDTO> listarPendentes() {
-        return compraRepository.buscarComprasPendentes()
-            .stream()
-            .map(this::converterParaDTO)
-            .toList();
-
-    }
-
-    public Optional<CompraResponseDTO> buscarPorId(Long id) {
-        return compraRepository.findById(id)
-            .map(compra -> new CompraResponseDTO(
                 compra.getId(),
                 compra.getCliente().getNome(),
                 compra.getValorTotal(),
                 compra.getStatus(),
                 compra.getItens().stream()
-                    .map(item -> new ItemCompraResponseDTO(
-                        item.getId(),
-                        item.getNomeProduto(),
-                        item.getQuantidade(),
-                        item.getPrecoUnitario(),
-                        item.getSubTotal()
-                    ))
-                    .collect(Collectors.toList()),
+                        .map(item -> new ItemCompraResponseDTO(
+                                item.getId(),
+                                item.getNomeProduto(),
+                                item.getQuantidade(),
+                                item.getPrecoUnitario(),
+                                item.getSubTotal()))
+                        .collect(Collectors.toList()),
                 compra.getValorPago(),
                 compra.getSaldoDevedor(),
                 compra.getFormaPagamento(),
                 compra.getStatusPagamento(),
-                compra.getDataVencimento()
-            ));
+                compra.getDataVencimento());
+
+    }
+
+    public List<CompraResponseDTO> listarPendentes() {
+        return compraRepository.buscarComprasPendentes()
+                .stream()
+                .map(this::converterParaDTO)
+                .toList();
+
+    }
+
+    public Optional<CompraResponseDTO> buscarPorId(Long id) {
+        return compraRepository.findById(id)
+                .map(compra -> new CompraResponseDTO(
+                        compra.getId(),
+                        compra.getCliente().getNome(),
+                        compra.getValorTotal(),
+                        compra.getStatus(),
+                        compra.getItens().stream()
+                                .map(item -> new ItemCompraResponseDTO(
+                                        item.getId(),
+                                        item.getNomeProduto(),
+                                        item.getQuantidade(),
+                                        item.getPrecoUnitario(),
+                                        item.getSubTotal()))
+                                .collect(Collectors.toList()),
+                        compra.getValorPago(),
+                        compra.getSaldoDevedor(),
+                        compra.getFormaPagamento(),
+                        compra.getStatusPagamento(),
+                        compra.getDataVencimento()));
     }
 
     public void deletar(Long id) {
@@ -205,64 +223,62 @@ public class CompraService {
     public Optional<CompraResponseDTO> atualizar(Long id, CompraRequestDTO compraRequestDTO) {
 
         return compraRepository.findById(id)
-            .map(compraExistente -> {
+                .map(compraExistente -> {
 
-                Cliente cliente = clienteRepository.findById(compraRequestDTO.getClienteId())
-                    .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
+                    Cliente cliente = clienteRepository.findById(compraRequestDTO.getClienteId())
+                            .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
 
-                Empresa empresa = empresaRepository.findById(compraRequestDTO.getEmpresaId())
-                    .orElseThrow(() -> new IllegalArgumentException("Empresa não encontrada"));
+                    Empresa empresa = empresaRepository.findById(compraRequestDTO.getEmpresaId())
+                            .orElseThrow(() -> new IllegalArgumentException("Empresa não encontrada"));
 
-                compraExistente.setCliente(cliente);
-                compraExistente.setEmpresa(empresa);
-                compraExistente.setValorTotal(compraRequestDTO.getValorTotal());
-                compraExistente.setStatus(compraRequestDTO.getStatus());
+                    compraExistente.setCliente(cliente);
+                    compraExistente.setEmpresa(empresa);
+                    compraExistente.setValorTotal(compraRequestDTO.getValorTotal());
+                    compraExistente.setStatus(compraRequestDTO.getStatus());
 
-                List<ItemCompra> itensAtualizados = compraRequestDTO.getItens().stream()
-                    .map(itemDTO -> {
+                    List<ItemCompra> itensAtualizados = compraRequestDTO.getItens().stream()
+                            .map(itemDTO -> {
 
-                        ItemCompra item = new ItemCompra();
+                                ItemCompra item = new ItemCompra();
 
-                        item.setNomeProduto(itemDTO.getNomeProduto());
-                        item.setQuantidade(itemDTO.getQuantidade());
-                        item.setPrecoUnitario(itemDTO.getPrecoUnitario());
+                                item.setNomeProduto(itemDTO.getNomeProduto());
+                                item.setQuantidade(itemDTO.getQuantidade());
+                                item.setPrecoUnitario(itemDTO.getPrecoUnitario());
 
-                        BigDecimal subTotal = itemDTO.getPrecoUnitario()
-                            .multiply(BigDecimal.valueOf(itemDTO.getQuantidade()));
+                                BigDecimal subTotal = itemDTO.getPrecoUnitario()
+                                        .multiply(BigDecimal.valueOf(itemDTO.getQuantidade()));
 
-                        item.setSubTotal(subTotal);
+                                item.setSubTotal(subTotal);
 
-                        item.setCompra(compraExistente);
+                                item.setCompra(compraExistente);
 
-                        return item;
-                    })
-                    .collect(Collectors.toList());
+                                return item;
+                            })
+                            .collect(Collectors.toList());
 
-                compraExistente.getItens().clear();
-                compraExistente.getItens().addAll(itensAtualizados);
+                    compraExistente.getItens().clear();
+                    compraExistente.getItens().addAll(itensAtualizados);
 
-                Compra compraAtualizada = compraRepository.save(compraExistente);
+                    Compra compraAtualizada = compraRepository.save(compraExistente);
 
-                return new CompraResponseDTO(
-                    compraAtualizada.getId(),
-                        compraAtualizada.getCliente().getNome(),
-                    compraAtualizada.getValorTotal(),
-                    compraAtualizada.getStatus(),
-                    compraAtualizada.getItens().stream()
-                        .map(item -> new ItemCompraResponseDTO(
-                            item.getId(),
-                            item.getNomeProduto(),
-                            item.getQuantidade(),
-                            item.getPrecoUnitario(),
-                            item.getSubTotal()
-                        ))
-                        .collect(Collectors.toList()),
-                    compraAtualizada.getValorPago(),
-                    compraAtualizada.getSaldoDevedor(),
-                    compraAtualizada.getFormaPagamento(),
-                    compraAtualizada.getStatusPagamento(),
-                    compraAtualizada.getDataVencimento()
-                );
-            });
+                    return new CompraResponseDTO(
+                            compraAtualizada.getId(),
+                            compraAtualizada.getCliente().getNome(),
+                            compraAtualizada.getValorTotal(),
+                            compraAtualizada.getStatus(),
+                            compraAtualizada.getItens().stream()
+                                    .map(item -> new ItemCompraResponseDTO(
+                                            item.getId(),
+                                            item.getNomeProduto(),
+                                            item.getQuantidade(),
+                                            item.getPrecoUnitario(),
+                                            item.getSubTotal()))
+                                    .collect(Collectors.toList()),
+                            compraAtualizada.getValorPago(),
+                            compraAtualizada.getSaldoDevedor(),
+                            compraAtualizada.getFormaPagamento(),
+                            compraAtualizada.getStatusPagamento(),
+                            compraAtualizada.getDataVencimento());
+                });
     }
 }
