@@ -44,16 +44,24 @@ public class Pagamento {
     private String observacao;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "cliente_id", nullable = false)
+    @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "empresa_id", nullable = false)
+    @JoinColumn(name = "fornecedor_id")
+    private Fornecedor fornecedor;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "empresa_id")
     private Empresa empresa;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "compra_id", nullable = false)
+    @JoinColumn(name = "compra_id")
     private Compra compra;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "venda_id")
+    private Venda venda;
     
     @PrePersist
     public void prePersist() {

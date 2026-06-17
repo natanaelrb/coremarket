@@ -3,7 +3,6 @@ package com.natan.coremarket.application.services;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.natan.coremarket.domain.entities.Compra;
 import com.natan.coremarket.domain.enums.StatusPagamento;
@@ -12,133 +11,317 @@ import org.springframework.stereotype.Service;
 
 import com.natan.coremarket.application.dtos.pagamento.PagamentoRequestDTO;
 import com.natan.coremarket.application.dtos.pagamento.PagamentoResponseDTO;
-import com.natan.coremarket.domain.entities.Cliente;
 import com.natan.coremarket.domain.entities.Empresa;
 import com.natan.coremarket.domain.entities.Pagamento;
-import com.natan.coremarket.infrastructure.repositories.ClienteRepository;
+import com.natan.coremarket.domain.entities.Venda;
 import com.natan.coremarket.infrastructure.repositories.EmpresaRepository;
 import com.natan.coremarket.infrastructure.repositories.PagamentoRepository;
+import com.natan.coremarket.infrastructure.repositories.VendaRepository;
+
+import jakarta.transaction.Transactional;
+
 @Service
 public class PagamentoService {
-    
-    private final PagamentoRepository pagamentoRepository;
-    private final ClienteRepository clienteRepository;
-    private final EmpresaRepository empresaRepository;
-    private final CompraRepository compraRepository;
-    
 
-    public PagamentoService(PagamentoRepository pagamentoRepository, ClienteRepository clienteRepository, EmpresaRepository empresaRepository, CompraRepository compraRepository) {
-        this.pagamentoRepository = pagamentoRepository;
-        this.clienteRepository = clienteRepository;
-        this.empresaRepository = empresaRepository;
-        this.compraRepository = compraRepository;
-    }
-    
-    public PagamentoResponseDTO salvar(PagamentoRequestDTO pagamentoRequestDTO) {
+        private final PagamentoRepository pagamentoRepository;
+        private final EmpresaRepository empresaRepository;
+        private final CompraRepository compraRepository;
+        private final VendaRepository vendaRepository;
 
-        Cliente cliente = clienteRepository.findById(pagamentoRequestDTO.getClienteId())
-            .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
+        public PagamentoService(
+                        PagamentoRepository pagamentoRepository, 
+                        EmpresaRepository empresaRepository,
+                        CompraRepository compraRepository, 
+                        VendaRepository vendaRepository) {
+                this.pagamentoRepository = pagamentoRepository;
+                this.empresaRepository = empresaRepository;
+                this.compraRepository = compraRepository;
+                this.vendaRepository = vendaRepository;
+        }
 
-        Empresa empresa = empresaRepository.findById(pagamentoRequestDTO.getEmpresaId())
-            .orElseThrow(() -> new IllegalArgumentException("Empresa não encontrada"));
+        @Transactional
+        public PagamentoResponseDTO salvar(PagamentoRequestDTO dto) {
 
-        Compra compra = compraRepository.findById(
-                pagamentoRequestDTO.getCompraId()
-        ).orElseThrow(() ->
-                new IllegalArgumentException("Compra não encontrada")
-        );
+        Empresa empresa = empresaRepository.findById(dto.getEmpresaId())
+                .orElseThrow(() -> new IllegalArgumentException( "Empresa não encontrada"));
+
+        validarOrigemPagamento(dto);
 
         Pagamento pagamento = new Pagamento();
-
-        pagamento.setValorPago(pagamentoRequestDTO.getValorPago());
-        pagamento.setObservacao(pagamentoRequestDTO.getObservacao());
-        pagamento.setCliente(cliente);
         pagamento.setEmpresa(empresa);
-        pagamento.setCompra(compra);
+        pagamento.setValorPago(dto.getValorPago());
+        pagamento.setObservacao(dto.getObservacao());
+
+        if (dto.getCompraId() != null) {
+            processarPagamentoCompra(
+                    pagamento,
+                    dto.getCompraId());
+                }
+
+        if (dto.getVendaId() != null) {
+            processarPagamentoVenda(
+                    pagamento,
+                    dto.getVendaId());
+                }
 
         Pagamento pagamentoSalvo = pagamentoRepository.save(pagamento);
 
-        BigDecimal novoValorPago =
-                compra.getValorPago().add(
-                        pagamentoRequestDTO.getValorPago()
-                );
+        return new PagamentoResponseDTO(
+                pagamentoSalvo.getId(),
+                pagamentoSalvo.getValorPago(),
+                pagamentoSalvo.getObservacao());
+        }
 
-        if (novoValorPago.compareTo(compra.getValorTotal()) > 0) {
+    public List<PagamentoResponseDTO> listarTodos() {
+        return pagamentoRepository.findAll()
+                .stream()
+                .map(p -> new PagamentoResponseDTO(
+                        p.getId(),
+                        p.getValorPago(),
+                        p.getObservacao()))
+                .toList();
+        }
 
-            throw new IllegalArgumentException(
-                    "Pagamento maior que o saldo devedor."
-            );
+    public Optional<PagamentoResponseDTO> buscarPorId(Long id) {
+
+        return pagamentoRepository.findById(id)
+                .map(p -> new PagamentoResponseDTO(
+                        p.getId(),
+                        p.getValorPago(),
+                        p.getObservacao()));
+        }
+
+    @Transactional
+    public void deletar(Long id) {
+
+        Pagamento pagamento = pagamentoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Pagamento não encontrado"));
+
+        if (pagamento.getCompra() != null) {
+
+            Compra compra = pagamento.getCompra();
+
+            BigDecimal novoValorPago =
+                    compra.getValorPago()
+                            .subtract(
+                                    pagamento.getValorPago());
+
+            compra.setValorPago(novoValorPago);
+
+            atualizarStatusCompra(compra);
+
+            compraRepository.save(compra);
+        }
+
+        if (pagamento.getVenda() != null) {
+
+            Venda venda = pagamento.getVenda();
+
+            BigDecimal novoValorPago =
+                    venda.getValorPago()
+                            .subtract(
+                                    pagamento.getValorPago());
+
+            venda.setValorPago(novoValorPago);
+
+            atualizarStatusVenda(venda);
+
+            vendaRepository.save(venda);
+        }
+
+        pagamentoRepository.delete(pagamento);
 
         }
-        compra.setValorPago(
-                compra.getValorPago().add(
-                        pagamentoRequestDTO.getValorPago()
-                )
-        );
 
-        if (compra.getSaldoDevedor().compareTo(BigDecimal.ZERO) <= 0) {
+    @Transactional
+    public Optional<PagamentoResponseDTO> atualizar(Long id, PagamentoRequestDTO dto) {
 
-            compra.setStatusPagamento(StatusPagamento.PAGO);
+        return pagamentoRepository.findById(id)
+                .map(pagamento -> {
+
+                    if (pagamento.getCompra() != null) {
+
+                        Compra compra = pagamento.getCompra();
+
+                        compra.setValorPago(
+                                compra.getValorPago()
+                                        .subtract(
+                                                pagamento.getValorPago()));
+
+                        atualizarStatusCompra(compra);
+                        compraRepository.save(compra);
+                }
+
+                    if (pagamento.getVenda() != null) {
+
+                        Venda venda = pagamento.getVenda();
+
+                        venda.setValorPago(
+                                venda.getValorPago()
+                                        .subtract(
+                                                pagamento.getValorPago()));
+
+                        atualizarStatusVenda(venda);
+                        vendaRepository.save(venda);
+                }
+                    pagamento.setValorPago(dto.getValorPago());
+
+                    pagamento.setObservacao(dto.getObservacao());
+
+                    pagamento.setCompra(null);
+                    pagamento.setFornecedor(null);
+                    pagamento.setVenda(null);
+                    pagamento.setCliente(null);
+
+                    validarOrigemPagamento(dto);
+
+                    if (dto.getCompraId() != null) {
+                        processarPagamentoCompra(
+                                pagamento,
+                                dto.getCompraId());
+                        }
+
+                    if (dto.getVendaId() != null) {
+                        processarPagamentoVenda(
+                                pagamento,
+                                dto.getVendaId());
+                        }
+
+                    Pagamento atualizado = pagamentoRepository.save(pagamento);
+
+                    return new PagamentoResponseDTO(
+                            atualizado.getId(),
+                            atualizado.getValorPago(),
+                            atualizado.getObservacao());
+                });
+        }
+
+    private void validarOrigemPagamento(PagamentoRequestDTO dto) {
+
+        if (dto.getCompraId() == null
+                && dto.getVendaId() == null) {
+
+            throw new IllegalArgumentException(
+                    "Informe uma compra ou uma venda.");
+                }
+
+        if (dto.getCompraId() != null
+                && dto.getVendaId() != null) {
+
+            throw new IllegalArgumentException(
+                    "O pagamento deve pertencer apenas a uma compra ou uma venda.");
+                }
+        }
+
+    private void processarPagamentoCompra(
+            Pagamento pagamento,
+            Long compraId) {
+
+        Compra compra =
+                compraRepository.findById(compraId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Compra não encontrada"));
+
+        BigDecimal novoValorPago =
+                compra.getValorPago()
+                        .add(
+                                pagamento.getValorPago());
+
+        if (novoValorPago.compareTo(
+                compra.getValorTotal()) > 0) {
+
+            throw new IllegalArgumentException(
+                    "Pagamento maior que o saldo devedor.");
+                }
+
+        compra.setValorPago(novoValorPago);
+
+        atualizarStatusCompra(compra);
+
+        compraRepository.save(compra);
+
+        pagamento.setCompra(compra);
+        pagamento.setFornecedor(
+                compra.getFornecedor());
+        }
+
+    private void processarPagamentoVenda(
+            Pagamento pagamento,
+            Long vendaId) {
+
+        Venda venda =
+                vendaRepository.findById(vendaId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Venda não encontrada"));
+
+        BigDecimal novoValorPago =
+                venda.getValorPago()
+                        .add(
+                                pagamento.getValorPago());
+
+        if (novoValorPago.compareTo(
+                venda.getValorTotal()) > 0) {
+
+            throw new IllegalArgumentException(
+                    "Pagamento maior que o saldo devedor.");
+                }
+
+        venda.setValorPago(novoValorPago);
+
+        atualizarStatusVenda(venda);
+
+        vendaRepository.save(venda);
+
+        pagamento.setVenda(venda);
+        pagamento.setCliente(
+                venda.getCliente());
+        }
+
+    private void atualizarStatusCompra(
+            Compra compra) {
+
+        if (compra.getValorPago()
+                .compareTo(BigDecimal.ZERO) == 0) {
+
+            compra.setStatusPagamento(
+                    StatusPagamento.PENDENTE);
+
+        } else if (compra.getValorPago()
+                .compareTo(
+                        compra.getValorTotal()) >= 0) {
+
+            compra.setStatusPagamento(
+                    StatusPagamento.PAGO);
 
         } else {
 
-            compra.setStatusPagamento(StatusPagamento.PARCIAL);
-
+            compra.setStatusPagamento(
+                    StatusPagamento.PARCIAL);
+                }
         }
 
-        compraRepository.save(compra);
-        
-        return new PagamentoResponseDTO(
-            pagamentoSalvo.getId(),
-            pagamentoSalvo.getValorPago(),
-            pagamentoSalvo.getObservacao()
-        );
-    }
+    private void atualizarStatusVenda(
+            Venda venda) {
 
-    public List<PagamentoResponseDTO> listarTodos() {
-        return pagamentoRepository.findAll().stream()
-            .map(pagamento -> new PagamentoResponseDTO(
-                pagamento.getId(),
-                pagamento.getValorPago(),
-                pagamento.getObservacao()
-            ))
-            .collect(Collectors.toList());
-    }
+        if (venda.getValorPago()
+                .compareTo(BigDecimal.ZERO) == 0) {
 
-    public Optional<PagamentoResponseDTO> buscarPorId(Long id) {
-        return pagamentoRepository.findById(id).map(pagamento -> new PagamentoResponseDTO(
-            pagamento.getId(),
-            pagamento.getValorPago(),
-            pagamento.getObservacao()
-        ));
-    }
+            venda.setStatusPagamento(
+                    StatusPagamento.PENDENTE);
 
-    public void deletar(Long id) {
-        pagamentoRepository.deleteById(id);
-    }
-    
-    public Optional<PagamentoResponseDTO> atualizar(Long id, PagamentoRequestDTO pagamentoRequestDTO) {
-        return pagamentoRepository.findById(id)
-            .map(pagamentoExistente -> {
-                pagamentoExistente.setValorPago(pagamentoRequestDTO.getValorPago());
-                pagamentoExistente.setObservacao(pagamentoRequestDTO.getObservacao());
+        } else if (venda.getValorPago()
+                .compareTo(
+                        venda.getValorTotal()) >= 0) {
 
-                Cliente cliente = clienteRepository.findById(pagamentoRequestDTO.getClienteId())
-                    .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
-                pagamentoExistente.setCliente(cliente);
+            venda.setStatusPagamento(
+                    StatusPagamento.PAGO);
 
-                Empresa empresa = empresaRepository.findById(pagamentoRequestDTO.getEmpresaId())
-                    .orElseThrow(() -> new IllegalArgumentException("Empresa não encontrada"));
-                pagamentoExistente.setEmpresa(empresa);
+        } else {
 
-                Pagamento pagamentoAtualizado = pagamentoRepository.save(pagamentoExistente);
-                
-                return new PagamentoResponseDTO(
-                    pagamentoAtualizado.getId(),
-                    pagamentoAtualizado.getValorPago(),
-                    pagamentoAtualizado.getObservacao()
-                );
-            });
-    }
-
+            venda.setStatusPagamento(
+                    StatusPagamento.PARCIAL);
+                }
+        }
 }

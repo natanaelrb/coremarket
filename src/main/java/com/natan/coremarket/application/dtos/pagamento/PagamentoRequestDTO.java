@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,8 +12,12 @@ import lombok.Setter;
 @Setter
 public class PagamentoRequestDTO {
 
-    @NotNull(message = "O ID da compra é obrigatório")
     private Long compraId;
+
+    private Long vendaId;
+
+    @NotNull(message = "O ID da empresa é obrigatório")
+    private Long empresaId;
 
     @NotNull(message = "O valor pago é obrigatório")
     private BigDecimal valorPago;
@@ -20,10 +25,4 @@ public class PagamentoRequestDTO {
     @NotBlank(message = "A observação do pagamento é obrigatória")
     private String observacao;
 
-    @NotNull(message = "O ID do cliente é obrigatório")
-    private Long clienteId;
-
-    @NotNull(message = "O ID da empresa é obrigatório")
-    private Long empresaId;
-    
 }
