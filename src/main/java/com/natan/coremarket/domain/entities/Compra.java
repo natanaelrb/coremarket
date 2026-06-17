@@ -46,8 +46,8 @@ public class Compra {
     private Long id;
     
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "cliente_id", nullable = false)
-    private Cliente cliente;
+    @JoinColumn(name = "fornecedor_id", nullable = false)
+    private Fornecedor fornecedor;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "empresa_id", nullable = false)
@@ -80,6 +80,9 @@ public class Compra {
            cascade = CascadeType.ALL,
            orphanRemoval = true)
     private List<ItemCompra> itens = new ArrayList<>();
+
+    @OneToMany(mappedBy = "compra")
+    private List<Pagamento> pagamentos = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {

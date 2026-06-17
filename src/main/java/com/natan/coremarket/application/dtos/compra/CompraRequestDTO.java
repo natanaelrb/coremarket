@@ -11,6 +11,7 @@ import com.natan.coremarket.domain.enums.StatusCompra;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,8 +19,8 @@ import lombok.Setter;
 @Setter
 public class CompraRequestDTO {
     
-    @NotNull(message = "O ID do cliente é obrigatório")
-    private Long clienteId;
+    @NotNull(message = "O ID do fornecedor é obrigatório")
+    private Long fornecedorId;
 
     @NotNull(message = "O ID da empresa é obrigatório")
     private Long empresaId;

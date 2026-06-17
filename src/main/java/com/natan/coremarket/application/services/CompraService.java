@@ -10,38 +10,41 @@ import org.springframework.stereotype.Service;
 import com.natan.coremarket.application.dtos.compra.CompraRequestDTO;
 import com.natan.coremarket.application.dtos.compra.CompraResponseDTO;
 import com.natan.coremarket.application.dtos.itemCompra.ItemCompraResponseDTO;
-import com.natan.coremarket.domain.entities.Cliente;
 import com.natan.coremarket.domain.entities.Compra;
 import com.natan.coremarket.domain.entities.Empresa;
+import com.natan.coremarket.domain.entities.Fornecedor;
 import com.natan.coremarket.domain.entities.ItemCompra;
 import com.natan.coremarket.domain.entities.Produto;
 import com.natan.coremarket.domain.enums.FormaPagamento;
 import com.natan.coremarket.domain.enums.StatusPagamento;
-import com.natan.coremarket.infrastructure.repositories.ClienteRepository;
 import com.natan.coremarket.infrastructure.repositories.CompraRepository;
 import com.natan.coremarket.infrastructure.repositories.EmpresaRepository;
+import com.natan.coremarket.infrastructure.repositories.FornecedorRepository;
 import com.natan.coremarket.infrastructure.repositories.ProdutoRepository;
 
 @Service
 public class CompraService {
 
     private final CompraRepository compraRepository;
-    private final ClienteRepository clienteRepository;
+    private final FornecedorRepository fornecedorRepository;
     private final EmpresaRepository empresaRepository;
     private final ProdutoRepository produtoRepository;
 
-    public CompraService(CompraRepository compraRepository, ClienteRepository clienteRepository,
-            EmpresaRepository empresaRepository, ProdutoRepository produtoRepository) {
+    public CompraService(
+                CompraRepository compraRepository, 
+                FornecedorRepository fornecedorRepository,
+                EmpresaRepository empresaRepository, 
+                ProdutoRepository produtoRepository) {
         this.compraRepository = compraRepository;
-        this.clienteRepository = clienteRepository;
+        this.fornecedorRepository = fornecedorRepository;
         this.empresaRepository = empresaRepository;
         this.produtoRepository = produtoRepository;
     }
 
     public CompraResponseDTO salvar(CompraRequestDTO compraRequestDTO) {
 
-        Cliente cliente = clienteRepository.findById(compraRequestDTO.getClienteId())
-                .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
+        Fornecedor fornecedor = fornecedorRepository.findById(compraRequestDTO.getFornecedorId())
+                .orElseThrow(() -> new IllegalArgumentException("Fornecedor não encontrado"));
 
         Empresa empresa = empresaRepository.findById(compraRequestDTO.getEmpresaId())
                 .orElseThrow(() -> new IllegalArgumentException("Empresa não encontrada"));
@@ -55,7 +58,7 @@ public class CompraService {
                     "Data de vencimento é obrigatória para compras a prazo");
         }
 
-        compra.setCliente(cliente);
+        compra.setFornecedor(fornecedor);
         compra.setEmpresa(empresa);
         compra.setValorTotal(compraRequestDTO.getValorTotal());
         compra.setStatus(compraRequestDTO.getStatus());
@@ -122,7 +125,7 @@ public class CompraService {
 
         return new CompraResponseDTO(
                 compraSalva.getId(),
-                compraSalva.getCliente().getNome(),
+                compraSalva.getFornecedor().getNome(),
                 compraSalva.getValorTotal(),
                 compraSalva.getStatus(),
                 compraSalva.getItens().stream()
@@ -138,13 +141,13 @@ public class CompraService {
                 compraSalva.getFormaPagamento(),
                 compraSalva.getStatusPagamento(),
                 compraSalva.getDataVencimento());
-    }
+        }
 
     public List<CompraResponseDTO> listarTodos() {
         return compraRepository.findAll().stream()
                 .map(compra -> new CompraResponseDTO(
                         compra.getId(),
-                        compra.getCliente().getNome(),
+                        compra.getFornecedor().getNome(),
                         compra.getValorTotal(),
                         compra.getStatus(),
                         compra.getItens().stream()
@@ -161,13 +164,13 @@ public class CompraService {
                         compra.getStatusPagamento(),
                         compra.getDataVencimento()))
                 .collect(Collectors.toList());
-    }
+        }
 
     private CompraResponseDTO converterParaDTO(Compra compra) {
 
         return new CompraResponseDTO(
                 compra.getId(),
-                compra.getCliente().getNome(),
+                compra.getFornecedor().getNome(),
                 compra.getValorTotal(),
                 compra.getStatus(),
                 compra.getItens().stream()
@@ -183,22 +186,20 @@ public class CompraService {
                 compra.getFormaPagamento(),
                 compra.getStatusPagamento(),
                 compra.getDataVencimento());
-
-    }
+        }
 
     public List<CompraResponseDTO> listarPendentes() {
         return compraRepository.buscarComprasPendentes()
                 .stream()
                 .map(this::converterParaDTO)
                 .toList();
-
-    }
+        }
 
     public Optional<CompraResponseDTO> buscarPorId(Long id) {
         return compraRepository.findById(id)
                 .map(compra -> new CompraResponseDTO(
                         compra.getId(),
-                        compra.getCliente().getNome(),
+                        compra.getFornecedor().getNome(),
                         compra.getValorTotal(),
                         compra.getStatus(),
                         compra.getItens().stream()
@@ -225,13 +226,13 @@ public class CompraService {
         return compraRepository.findById(id)
                 .map(compraExistente -> {
 
-                    Cliente cliente = clienteRepository.findById(compraRequestDTO.getClienteId())
-                            .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
+                    Fornecedor fornecedor = fornecedorRepository.findById(compraRequestDTO.getFornecedorId())
+                                .orElseThrow(() -> new IllegalArgumentException("Fornecedor não encontrado"));
 
                     Empresa empresa = empresaRepository.findById(compraRequestDTO.getEmpresaId())
-                            .orElseThrow(() -> new IllegalArgumentException("Empresa não encontrada"));
+                                .orElseThrow(() -> new IllegalArgumentException("Empresa não encontrada"));
 
-                    compraExistente.setCliente(cliente);
+                    compraExistente.setFornecedor(fornecedor);
                     compraExistente.setEmpresa(empresa);
                     compraExistente.setValorTotal(compraRequestDTO.getValorTotal());
                     compraExistente.setStatus(compraRequestDTO.getStatus());
@@ -249,7 +250,6 @@ public class CompraService {
                                         .multiply(BigDecimal.valueOf(itemDTO.getQuantidade()));
 
                                 item.setSubTotal(subTotal);
-
                                 item.setCompra(compraExistente);
 
                                 return item;
@@ -263,7 +263,7 @@ public class CompraService {
 
                     return new CompraResponseDTO(
                             compraAtualizada.getId(),
-                            compraAtualizada.getCliente().getNome(),
+                            compraAtualizada.getFornecedor().getNome(),
                             compraAtualizada.getValorTotal(),
                             compraAtualizada.getStatus(),
                             compraAtualizada.getItens().stream()
@@ -280,5 +280,5 @@ public class CompraService {
                             compraAtualizada.getStatusPagamento(),
                             compraAtualizada.getDataVencimento());
                 });
-    }
+        }
 }
