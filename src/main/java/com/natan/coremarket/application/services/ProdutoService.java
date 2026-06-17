@@ -16,7 +16,8 @@ public class ProdutoService {
 
     private final ProdutoRepository produtoRepository;
 
-    public ProdutoService(ProdutoRepository produtoRepository) {
+    public ProdutoService(
+                ProdutoRepository produtoRepository) {
         this.produtoRepository = produtoRepository;
     }
 
@@ -52,7 +53,7 @@ public class ProdutoService {
                         produto.getQuantidadeEstoque()
                 ))
                 .collect(Collectors.toList());
-    }
+        }
 
     public Optional<ProdutoResponseDTO> buscarPorId(Long id) {
 
@@ -64,14 +65,13 @@ public class ProdutoService {
                         produto.getPreco(),
                         produto.getQuantidadeEstoque()
                 ));
-    }
+        }
 
     public void deletar(Long id) {
         produtoRepository.deleteById(id);
     }
 
-    public Optional<ProdutoResponseDTO> atualizar(Long id,
-                                                  ProdutoRequestDTO produtoRequestDTO) {
+    public Optional<ProdutoResponseDTO> atualizar(Long id, ProdutoRequestDTO produtoRequestDTO) {
 
         return produtoRepository.findById(id)
                 .map(produtoExistente -> {
@@ -81,7 +81,7 @@ public class ProdutoService {
                     produtoExistente.setPreco(produtoRequestDTO.getPreco());
                     produtoExistente.setQuantidadeEstoque(
                             produtoRequestDTO.getQuantidadeEstoque()
-                    );
+                        );
 
                     Produto produtoAtualizado =
                             produtoRepository.save(produtoExistente);
@@ -92,7 +92,7 @@ public class ProdutoService {
                             produtoAtualizado.getDescricao(),
                             produtoAtualizado.getPreco(),
                             produtoAtualizado.getQuantidadeEstoque()
-                    );
+                        );
                 });
-    }
+        }
 }

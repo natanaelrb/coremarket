@@ -15,15 +15,15 @@ public class ItemCompraRequestDTO {
     @NotNull(message = "O produto é obrigatório")
     private Long produtoId;
 
-    @NotBlank(message = "O nome do produto é obrigatório")
-    private String nomeProduto;
+    // @NotBlank(message = "O nome do produto é obrigatório")
+    // private String nomeProduto;
 
     @NotNull(message = "A quantidade do item é obrigatória")
     @Positive(message = "A quantidade deve ser maior que zero")
     private Integer quantidade;
 
-    @NotNull(message = "O preço unitário é obrigatório")
-    @Positive(message = "O preço unitário deve ser maior que zero")
-    private BigDecimal precoUnitario;
+    // @NotNull(message = "O preço unitário é obrigatório")
+    // @Positive(message = "O preço unitário deve ser maior que zero")
+    // private BigDecimal precoUnitario;
     
 }

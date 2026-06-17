@@ -85,17 +85,9 @@ public class CompraService {
                             .orElseThrow(() -> new IllegalArgumentException(
                                     "Produto não encontrado"));
 
-                    if (produto.getQuantidadeEstoque() < itemDTO.getQuantidade()) {
-
-                        throw new IllegalArgumentException(
-                                "Estoque insuficiente para "
-                                        + produto.getNome());
-
-                    }
-
                     produto.setQuantidadeEstoque(
                             produto.getQuantidadeEstoque()
-                                    - itemDTO.getQuantidade());
+                                    + itemDTO.getQuantidade());
 
                     produtoRepository.save(produto);
 
@@ -215,11 +207,31 @@ public class CompraService {
                         compra.getFormaPagamento(),
                         compra.getStatusPagamento(),
                         compra.getDataVencimento()));
-    }
+        }
 
     public void deletar(Long id) {
-        compraRepository.deleteById(id);
-    }
+        Compra compra = compraRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException( "Compra não encontrada"));
+                
+        if (!compra.getPagamentos().isEmpty()) {
+                throw new IllegalArgumentException(
+                        "Não é possível excluir uma compra que possui pagamentos.");
+        }
+
+        for (ItemCompra item : compra.getItens()) {
+
+        Produto produto = item.getProduto();
+
+        produto.setQuantidadeEstoque(
+                produto.getQuantidadeEstoque()
+                        - item.getQuantidade());
+
+                produtoRepository.save(produto);
+        }
+
+        compraRepository.delete(compra);
+
+        }
 
     public Optional<CompraResponseDTO> atualizar(Long id, CompraRequestDTO compraRequestDTO) {
 
@@ -234,30 +246,67 @@ public class CompraService {
 
                     compraExistente.setFornecedor(fornecedor);
                     compraExistente.setEmpresa(empresa);
-                    compraExistente.setValorTotal(compraRequestDTO.getValorTotal());
                     compraExistente.setStatus(compraRequestDTO.getStatus());
+
+                    for (ItemCompra item : compraExistente.getItens()) {
+
+                        Produto produto = item.getProduto();
+
+                        produto.setQuantidadeEstoque(
+                                produto.getQuantidadeEstoque()
+                                        - item.getQuantidade());
+
+                        produtoRepository.save(produto);
+                }
 
                     List<ItemCompra> itensAtualizados = compraRequestDTO.getItens().stream()
                             .map(itemDTO -> {
 
+                                Produto produto = produtoRepository.findById(
+                                        itemDTO.getProdutoId())
+                                        .orElseThrow(() ->
+                                                new IllegalArgumentException(
+                                                        "Produto não encontrado"));
+
+                                produto.setQuantidadeEstoque(
+                                        produto.getQuantidadeEstoque()
+                                                + itemDTO.getQuantidade());
+
+                                produtoRepository.save(produto);
+
                                 ItemCompra item = new ItemCompra();
 
-                                item.setNomeProduto(itemDTO.getNomeProduto());
+                                item.setProduto(produto);
+                                item.setNomeProduto(produto.getNome());
                                 item.setQuantidade(itemDTO.getQuantidade());
-                                item.setPrecoUnitario(itemDTO.getPrecoUnitario());
+                                item.setPrecoUnitario(produto.getPreco());
 
-                                BigDecimal subTotal = itemDTO.getPrecoUnitario()
-                                        .multiply(BigDecimal.valueOf(itemDTO.getQuantidade()));
+                                BigDecimal subTotal =
+                                        produto.getPreco()
+                                                .multiply(
+                                                        BigDecimal.valueOf(
+                                                                itemDTO.getQuantidade()));
 
                                 item.setSubTotal(subTotal);
                                 item.setCompra(compraExistente);
 
                                 return item;
-                            })
-                            .collect(Collectors.toList());
+
+                                })
+
+                        .collect(Collectors.toList());
 
                     compraExistente.getItens().clear();
                     compraExistente.getItens().addAll(itensAtualizados);
+
+                    BigDecimal valorTotal =
+                        itensAtualizados.stream()
+                                .map(ItemCompra::getSubTotal)
+                                .reduce(
+                                        BigDecimal.ZERO,
+                                        BigDecimal::add);
+
+                        compraExistente.setValorTotal(valorTotal);
 
                     Compra compraAtualizada = compraRepository.save(compraExistente);
 
