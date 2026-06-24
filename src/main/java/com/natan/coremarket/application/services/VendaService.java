@@ -1,6 +1,7 @@
 package com.natan.coremarket.application.services;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -295,6 +296,8 @@ public class VendaService {
                                 produto.setQuantidadeEstoque(
                                         produto.getQuantidadeEstoque()
                                                 - itemDTO.getQuantidade());
+                                                
+                                produto.setUltimaVenda(LocalDateTime.now());
 
                                 produtoRepository.save(produto);
 

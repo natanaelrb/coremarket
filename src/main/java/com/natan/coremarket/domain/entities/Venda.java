@@ -90,4 +90,11 @@ public class Venda {
     public BigDecimal getSaldoDevedor() {
         return valorTotal.subtract(valorPago);
     }
+
+    public boolean isAtrasado() {
+    return (statusPagamento == StatusPagamento.PENDENTE
+            || statusPagamento == StatusPagamento.PARCIAL)
+            && dataVencimento != null
+            && dataVencimento.isBefore(LocalDate.now());
+    }
 }
