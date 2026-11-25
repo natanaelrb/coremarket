@@ -1,136 +1,47 @@
-# 🏪 CoreMarket
+# CoreMarket
 
-Sistema SaaS para gerenciamento de contas pendentes em mini mercados.
+Sistema de gestão e inteligência comercial para pequenos mercados, em desenvolvimento.
 
-O CoreMarket foi criado para substituir o controle manual em cadernos, permitindo que mini mercados registrem clientes, compras, pagamentos e acompanhem saldos devedores de forma organizada e moderna.
+O CoreMarket busca reunir informações operacionais e comerciais em um só lugar, ajudando o mercado a acompanhar seus produtos, movimentações e desempenho de vendas.
 
----
+## Visão do produto
 
-# 🚀 Objetivo
+O escopo do sistema inclui módulos para:
 
-Facilitar o controle de clientes que compram e pagam posteriormente, oferecendo uma solução simples, prática e acessível para pequenos mercados.
+- Clientes e fornecedores
+- Produtos e estoque
+- Compras e movimentações
+- Vendas e operação de PDV
+- Contas a pagar e a receber
+- Indicadores e análises comerciais
 
----
+> O projeto está em desenvolvimento. Os módulos e funcionalidades podem evoluir conforme a implementação.
 
-# ✨ Funcionalidades
+## Tecnologias
 
-## 👥 Clientes
+### Back-end
+- Java
+- Spring Boot
+- PostgreSQL
+- Maven
 
-* Cadastro de clientes
-* Edição de clientes
-* Exclusão de clientes
-* Busca de clientes
+### Front-end
+- React
+- Vite
+- JavaScript
+- Tailwind CSS
 
----
+## Repositórios
 
-## 🛒 Compras
+- [Back-end — CoreMarket](https://github.com/natanaelrb/coremarket)
+- [Front-end — CoreMarket](https://github.com/natanaelrb/coremarket-frontend)
 
-* Registro de compras
-* Adição de múltiplos itens
-* Cálculo automático do valor total
-* Histórico de compras
+## Status
 
----
+🚧 Em desenvolvimento ativo.
 
-## 💰 Pagamentos
+Este projeto faz parte do meu portfólio de estudos em desenvolvimento Back-end, com foco em Java, APIs e persistência de dados.
 
-* Registro de pagamentos
-* Atualização automática do saldo devedor
-* Histórico de pagamentos
+## Autor
 
----
-
-## 🏢 Multiempresa
-
-* Cada mercado possui seus próprios dados
-* Isolamento de clientes, compras e pagamentos
-* Estrutura preparada para múltiplos usuários
-
----
-
-# 🛠️ Tecnologias
-
-## Backend
-
-* Java
-* Spring Boot
-* Spring Data JPA
-* PostgreSQL
-* Maven
-
----
-
-## Frontend
-
-* React
-* TailwindCSS
-* Axios
-* React Router DOM
-
----
-
-# 📂 Estrutura do Projeto
-
-```text
-src/main/java/com/natan/coremarket
- ├── application
- │    ├── dtos
- │    └── services
- │
- ├── domain
- │    ├── entities
- │    └── enums
- │
- ├── infrastructure
- │    ├── controllers
- │    └── repositories
- │
- └── config
-```
-
----
-
-# 🏗️ Entidades Principais
-
-* Empresa
-* Usuario
-* Cliente
-* Compra
-* ItemCompra
-* Pagamento
-
----
-
-# 🎯 Objetivo do MVP
-
-A primeira versão do sistema terá foco em:
-
-* Cadastro de clientes
-* Registro de compras
-* Registro de pagamentos
-* Controle de saldo devedor
-* Histórico básico
-
----
-
-# 📌 Status do Projeto
-
-🚧 Em desenvolvimento
-
----
-
-# 📖 Futuras Funcionalidades
-
-* Autenticação JWT
-* Dashboard financeiro
-* Relatórios
-* Integração com WhatsApp
-* Controle de estoque
-* Notificações
-* Aplicativo mobile
-
----
-
-# 👨‍💻 Autor
-
-Desenvolvido por Natanael Ribeiro.
+Natanael Ribeiro
